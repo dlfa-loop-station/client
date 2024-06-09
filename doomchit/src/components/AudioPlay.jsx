@@ -1,6 +1,6 @@
 import React from "react";
 
-const AudioPlay = ({ audioPreviewUrl }) => {  
+const AudioPlay = ({ audioPreviewUrl }) => {
   return (
     <>
       {audioPreviewUrl && (
