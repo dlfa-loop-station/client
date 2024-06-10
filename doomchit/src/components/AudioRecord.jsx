@@ -2,18 +2,21 @@ import React, { useState, useCallback } from "react";
 import AudioPlay from "./AudioPlay";
 import axios from "axios";
 import styled from "styled-components";
+
 const AudioRecord = () => {
+  const list = ["10.mp3", "72.mp3", "90.mp3", "91.mp3", "92.mp3"];
   const [stream, setStream] = useState();
   const [media, setMedia] = useState();
-  const [onRec, setOnRec] = useState(true);
+  const [onRecs, setOnRecs] = useState(Array(list.length).fill(true));
   const [source, setSource] = useState();
   const [analyser, setAnalyser] = useState();
-  const [audioUrl, setAudioUrl] = useState();
-  const [audioPreviewUrl, setAudioPreviewUrl] = useState();
+  const [audioUrls, setAudioUrls] = useState(Array(list.length).fill(null));
+  const [audioPreviewUrls, setAudioPreviewUrls] = useState(
+    Array(list.length).fill("")
+  );
   const [isPlayNote, setIsPlayNote] = useState();
-  const list = ["10.mp3", "72.mp3", "90.mp3", "91.mp3", "92.mp3"];
 
-  const onRecAudio = () => {
+  const onRecAudio = (index) => {
     // 음원정보를 담은 노드를 생성하거나 음원을 실행또는 디코딩 시키는 일을 한다
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     // 자바스크립트를 통해 음원의 진행상태에 직접접근에 사용된다.
@@ -38,17 +41,29 @@ const AudioRecord = () => {
 
       // 음성 녹음이 시작됐을 때 onRec state값을 false로 변경
       analyser.onaudioprocess = function (e) {
-        setOnRec(false);
+        setOnRecs((prevOnRecs) => {
+          const newOnRecs = [...prevOnRecs];
+          newOnRecs[index] = false;
+          return newOnRecs;
+        });
       };
     });
   };
 
   // 사용자가 음성 녹음을 중지했을 때
-  const offRecAudio = () => {
+  const offRecAudio = (index) => {
     // dataavailable 이벤트로 Blob 데이터에 대한 응답을 받을 수 있음
     media.ondataavailable = function (e) {
-      setAudioUrl(e.data);
-      setOnRec(true);
+      setAudioUrls((prevAudioUrls) => {
+        const newAudioUrls = [...prevAudioUrls];
+        newAudioUrls[index] = e.data;
+        return newAudioUrls;
+      });
+      setOnRecs((prevOnRecs) => {
+        const newOnRecs = [...prevOnRecs];
+        newOnRecs[index] = true;
+        return newOnRecs;
+      });
     };
 
     // 모든 트랙에서 stop()을 호출해 오디오 스트림을 정지
@@ -64,20 +79,26 @@ const AudioRecord = () => {
     onSubmitAudioFile();
   };
 
-  const onSubmitAudioFile = useCallback(() => {
-    if (audioUrl) {
-      const previewUrl = URL.createObjectURL(audioUrl); // 출력된 링크에서 녹음된 오디오 확인 가능
-      setAudioPreviewUrl(previewUrl);
-    }
-  }, [audioUrl]);
+  const onSubmitAudioFile = useCallback(
+    (index) => {
+      if (audioUrls[index]) {
+        const previewUrl = URL.createObjectURL(audioUrls[index]); // 출력된 링크에서 녹음된 오디오 확인 가능
+        setAudioPreviewUrls((prevAudioPreviewUrls) => {
+          const newAudioPreviewUrls = [...prevAudioPreviewUrls];
+          newAudioPreviewUrls[index] = previewUrl;
+          return newAudioPreviewUrls;
+        });
+      }
+    },
+    [audioUrls]
+  );
 
-  async function postSound() {
+  async function postSound(index) {
     // File 생성자를 사용해 파일로 변환
-    const sound = new File([audioUrl], "soundBlob", {
+    const sound = new File([audioUrls[index]], "soundBlob", {
       lastModified: new Date().getTime(),
       type: "audio",
     });
-    postSound(sound);
     try {
       const formData = new FormData();
       formData.append("file", sound);
@@ -99,31 +120,47 @@ const AudioRecord = () => {
 
   return (
     <Wrapper>
-      {list.map((m) => (
-        <Container>
-          <Box>{m && <AudioPlay audioPreviewUrl={m} />}</Box>
+      {list.map((m, index) => (
+        <Container key={index}>
+          <Box>{m && <AudioPlay url={m} />}</Box>
           <Box>
             <RecordBox>
-              {onRec ? (
-                <Image
-                  src={"microphone.svg"}
-                  alt={"microphone"}
-                  onClick={onRecAudio}
-                />
-              ) : (
-                <Image src={"stop.svg"} alt={"stop"} onClick={offRecAudio} />
-              )}
+              <ImageWrapper>
+                {onRecs[index] ? (
+                  <Image
+                    src={"microphone.svg"}
+                    alt={"microphone"}
+                    onClick={() => onRecAudio(index)}
+                  />
+                ) : (
+                  <Image
+                    src={"stop.svg"}
+                    alt={"stop"}
+                    onClick={() => offRecAudio(index)}
+                  />
+                )}
+              </ImageWrapper>
             </RecordBox>
             <TextBox>
-              <Button onClick={postSound}>Record Complete</Button>
-              <Button
-                onClick={() => {
-                  setOnRec(true);
-                  onRecAudio();
-                }}
-              >
-                Record Again
-              </Button>
+              {!(audioUrls[index] && source) ? (
+                <Txt>Record Yours</Txt>
+              ) : (
+                <>
+                  <Button onClick={postSound(index)}>Complete</Button>
+                  <Button
+                    onClick={() => {
+                      setOnRecs((prevOnRecs) => {
+                        const newOnRecs = [...prevOnRecs];
+                        newOnRecs[index] = true;
+                        return newOnRecs;
+                      });
+                      onRecAudio(index);
+                    }}
+                  >
+                    Again
+                  </Button>
+                </>
+              )}
             </TextBox>
           </Box>
         </Container>
@@ -152,7 +189,9 @@ const Box = styled.div`
   border: solid white 1.5px;
 `;
 const RecordBox = styled.div`
-  height: 160px;
+  position: relative;
+  height: 200px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -161,27 +200,60 @@ const RecordBox = styled.div`
 const TextBox = styled.div`
   display: flex;
   bottom: 0;
-  height: 60px;
-  flex-direction: column;
+  width: 100%;
   align-items: center;
   justify-content: center;
+`;
+const ImageWrapper = styled.div`
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+
+  &:hover {
+    opacity: 1;
+  }
 `;
 const Image = styled.img`
   width: 20%;
   filter: invert(1);
   cursor: pointer;
 `;
+const Txt = styled.div`
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  color: white;
+  border: solid white 1px;
+  font-size: 12px;
+`;
 const Button = styled.button`
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-
-  margin-bottom: 0.5px;
   padding: 0.5rem 1rem;
 
   display: inline-block;
-  width: auto;
+  width: 100%;
   background-color: transparent;
   color: white;
   border: solid white 1px;
+  font-size: 12px;
+
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+
+  &:hover {
+    background-color: white;
+    color: black;
+  }
+
+  &:hover ${ImageWrapper} {
+    opacity: 1;
+  }
 `;
