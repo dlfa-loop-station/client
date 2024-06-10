@@ -11,7 +11,8 @@ const AudioRecord = () => {
   const [audioUrl, setAudioUrl] = useState();
   const [audioPreviewUrl, setAudioPreviewUrl] = useState();
   const [isPlayNote, setIsPlayNote] = useState();
-  const list = [1, 2, 3, 4, 5];
+  const list = ["10.mp3", "72.mp3", "90.mp3", "91.mp3", "92.mp3"];
+
   const onRecAudio = () => {
     // 음원정보를 담은 노드를 생성하거나 음원을 실행또는 디코딩 시키는 일을 한다
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -68,16 +69,15 @@ const AudioRecord = () => {
       const previewUrl = URL.createObjectURL(audioUrl); // 출력된 링크에서 녹음된 오디오 확인 가능
       setAudioPreviewUrl(previewUrl);
     }
+  }, [audioUrl]);
+
+  async function postSound() {
     // File 생성자를 사용해 파일로 변환
     const sound = new File([audioUrl], "soundBlob", {
       lastModified: new Date().getTime(),
       type: "audio",
     });
     postSound(sound);
-    // console.log("sound", sound); // File 정보 출력
-  }, [audioUrl]);
-
-  async function postSound(sound) {
     try {
       const formData = new FormData();
       formData.append("file", sound);
@@ -90,7 +90,6 @@ const AudioRecord = () => {
           },
         }
       );
-
       const response2 = await axios.get("http://127.0.0.1:8000/midi");
       console.log(response2);
     } catch (error) {
@@ -102,15 +101,30 @@ const AudioRecord = () => {
     <Wrapper>
       {list.map((m) => (
         <Container>
-          <Box onClick={() => setIsPlayNote(!isPlayNote)}>
-            {isPlayNote && audioPreviewUrl && (
-              <AudioPlay audioPreviewUrl={audioPreviewUrl} />
-            )}
-          </Box>
-          <Box onClick={onRec ? onRecAudio : offRecAudio}>
-            {onRec ? "녹음 시작" : "녹음 중"}
-            <button onClick={onSubmitAudioFile}>결과 확인</button>
-            {audioPreviewUrl && <AudioPlay audioPreviewUrl={audioPreviewUrl} />}
+          <Box>{m && <AudioPlay audioPreviewUrl={m} />}</Box>
+          <Box>
+            <RecordBox>
+              {onRec ? (
+                <Image
+                  src={"microphone.svg"}
+                  alt={"microphone"}
+                  onClick={onRecAudio}
+                />
+              ) : (
+                <Image src={"stop.svg"} alt={"stop"} onClick={offRecAudio} />
+              )}
+            </RecordBox>
+            <TextBox>
+              <Button onClick={postSound}>Record Complete</Button>
+              <Button
+                onClick={() => {
+                  setOnRec(true);
+                  onRecAudio();
+                }}
+              >
+                Record Again
+              </Button>
+            </TextBox>
           </Box>
         </Container>
       ))}
@@ -131,6 +145,43 @@ const Container = styled.div`
   margin-bottom: 20px;
 `;
 const Box = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   height: 220px;
   border: solid white 1.5px;
+`;
+const RecordBox = styled.div`
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`;
+const TextBox = styled.div`
+  display: flex;
+  bottom: 0;
+  height: 60px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`;
+const Image = styled.img`
+  width: 20%;
+  filter: invert(1);
+  cursor: pointer;
+`;
+const Button = styled.button`
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  margin-bottom: 0.5px;
+  padding: 0.5rem 1rem;
+
+  display: inline-block;
+  width: auto;
+  background-color: transparent;
+  color: white;
+  border: solid white 1px;
 `;
