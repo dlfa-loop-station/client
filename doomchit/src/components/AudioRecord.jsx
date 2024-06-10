@@ -77,7 +77,17 @@ const AudioRecord = () => {
 
   async function postSound(sound) {
     try {
-      const response = await axios.post("", { sound });
+      const formData = new FormData();
+      formData.append("file", sound);
+      const response = await axios.post(
+        "http://127.0.0.1:8000/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       console.log(response);
     } catch (error) {
       console.error(error);
