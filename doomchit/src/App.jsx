@@ -15,6 +15,9 @@ export default function App() {
           <h2>Step 2</h2>
           <h2>Input your own Drum Note</h2>
         </Subtitle>
+        <RecordBox>
+          <AudioRecord></AudioRecord>
+        </RecordBox>
         <Subtitle>
           <h2>Step 3</h2>
           <h2>Listen CUSTOM DOOMCHIT</h2>
@@ -38,3 +41,4 @@ const Subtitle = styled.div`
   font-size: 24px;
   font-style: bold;
 `;
+const RecordBox = styled.div``;

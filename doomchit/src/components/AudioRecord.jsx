@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import AudioPlay from "./AudioPlay";
 import axios from "axios";
-
+import styled from "styled-components";
 const AudioRecord = () => {
   const [stream, setStream] = useState();
   const [media, setMedia] = useState();
@@ -10,7 +10,8 @@ const AudioRecord = () => {
   const [analyser, setAnalyser] = useState();
   const [audioUrl, setAudioUrl] = useState();
   const [audioPreviewUrl, setAudioPreviewUrl] = useState();
-
+  const [isPlayNote, setIsPlayNote] = useState();
+  const list = [1, 2, 3, 4, 5];
   const onRecAudio = () => {
     // 음원정보를 담은 노드를 생성하거나 음원을 실행또는 디코딩 시키는 일을 한다
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -59,6 +60,7 @@ const AudioRecord = () => {
     // 메서드가 호출 된 노드 연결 해제
     analyser.disconnect();
     source.disconnect();
+    onSubmitAudioFile();
   };
 
   const onSubmitAudioFile = useCallback(() => {
@@ -95,14 +97,38 @@ const AudioRecord = () => {
   }
 
   return (
-    <>
-      <button onClick={onRec ? onRecAudio : offRecAudio}>
-        {onRec ? "녹음 시작" : "녹음 중"}
-      </button>
-      <button onClick={onSubmitAudioFile}>결과 확인</button>
-      {audioPreviewUrl && <AudioPlay audioPreviewUrl={audioPreviewUrl} />}
-    </>
+    <Wrapper>
+      {list.map((m) => (
+        <Container>
+          <Box onClick={() => setIsPlayNote(!isPlayNote)}>
+            {isPlayNote && audioPreviewUrl && (
+              <AudioPlay audioPreviewUrl={audioPreviewUrl} />
+            )}
+          </Box>
+          <Box onClick={onRec ? onRecAudio : offRecAudio}>
+            {onRec ? "녹음 시작" : "녹음 중"}
+            <button onClick={onSubmitAudioFile}>결과 확인</button>
+            {audioPreviewUrl && <AudioPlay audioPreviewUrl={audioPreviewUrl} />}
+          </Box>
+        </Container>
+      ))}
+    </Wrapper>
   );
 };
 
 export default AudioRecord;
+const Wrapper = styled.div`
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(30%, auto));
+`;
+const Container = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-right: 15px;
+  margin-bottom: 20px;
+`;
+const Box = styled.div`
+  height: 220px;
+  border: solid white 1.5px;
+`;
