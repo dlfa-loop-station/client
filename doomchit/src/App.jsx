@@ -1,30 +1,20 @@
-import AudioRecord from "./components/AudioRecord";
 import styled from "styled-components";
-import PlayBox from "./components/PlayBox";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
+import Main from "./pages/Main";
+import Test from "./pages/Test";
+import NotFound from "./pages/NotFound";
+
 export default function App() {
   return (
-    <>
-      <header>
-        <Title>CUSTOM DOOMCHIT</Title>
-        <Subtitle>
-          <h2>Step 1</h2>
-          <h2>Listen Generated Drumbeat</h2>
-        </Subtitle>
-        <PlayBox />
-        <Subtitle>
-          <h2>Step 2</h2>
-          <h2>Input your own Drum Note</h2>
-        </Subtitle>
-        <RecordBox>
-          <AudioRecord></AudioRecord>
-        </RecordBox>
-        <Subtitle>
-          <h2>Step 3</h2>
-          <h2>Listen CUSTOM DOOMCHIT</h2>
-        </Subtitle>
-        <PlayBox />
-      </header>
-    </>
+    <BrowserRouter>
+      <Routes>
+        {/* 웹 서비스 소개 페이지 */}
+        <Route path="/" element={<Main />} />
+        {/* <SignIn /> */}
+        <Route path="/test" element={<Test />} />
+        <Route path={"*"} component={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 const Title = styled.h1`
