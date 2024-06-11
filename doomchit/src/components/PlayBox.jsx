@@ -1,11 +1,17 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import styled from "styled-components";
 import { Midi } from "@tonejs/midi";
+import "../helper";
 import "p5/lib/addons/p5.sound";
-import p5 from "p5";
+import * as p5 from "p5";
+import Song from "../music/1.mp3";
+
 const PlayBox = () => {
+  let canvas;
+  const [isPlay, setIsPlay] = useState(false);
+  const [song, setSong] = useState(null); // song 상태 추가
+
   const myRef = useRef();
-  const songRef = useRef();
   const fftRef = useRef();
   const toggleRef = useRef();
   const [height, setHeight] = useState(null);
@@ -18,78 +24,78 @@ const PlayBox = () => {
     }
   }, []);
 
-  const Sketch = (p) => {
-    let midi, song;
-
-    function toggleSong() {
-      if (song && song.isPlaying()) {
+  const toggleSong = () => {
+    if (song) {
+      // song이 로드되었는지 확인
+      if (song.isPlaying()) {
         song.pause();
       } else {
         song.play();
       }
+      setIsPlay(!isPlay); // 재생 상태 업데이트
     }
+  };
 
-    // p.preload = async () => {
-    //   midi = await Midi.fromUrl("1.mid");
-    // };
+  const Sketch = (p) => {
     p.preload = () => {
-      console.log(p);
-      //   p.loadSound("this-dot-kp.mp3", (loadedSound) => {
-      //     song = loadedSound;
-      //     song.play();
-      //   });
+      p.soundFormats("mp3");
+      p.loadSound(Song, (loadedSong) => {
+        setSong(loadedSong);
+      });
     };
+
     p.setup = () => {
-      p.createCanvas(width, height);
+      canvas = p.createCanvas(width, height - 10);
       p.colorMode(p.HSB);
       p.angleMode(p.DEGREES);
-      toggleRef.current = p.createButton("toggle");
-      toggleRef.current.mousePressed(toggleSong);
 
-      //   toggleRef.current.mousePressed(() => {
-      //     console.log(midi);
-      //     if (midi && midi.isPlaying()) {
-      //       midi.pause();
-      //     } else {
-      //       midi.play();
-      //     }
-      //   });
-      //   if (midi) {
-      //     midi.play();
-      //   }
-      fftRef.current = new window.p5.FFT(0.9, 128);
+      fftRef.current = new p5.FFT(0.9, 128);
     };
 
     p.draw = () => {
-      p.background("white");
-      const spectrum = fftRef.current.analyze();
-      p.noStroke();
-      p.translate(p.width / 2, p.height / 2);
+      p.background(0);
+      if (fftRef.current) {
+        const spectrum = fftRef.current.analyze();
+        p.noStroke();
+        p.translate(p.width / 2, p.height / 2);
 
-      for (let i = 0; i < spectrum.length; i++) {
-        const angle = p.map(i, 0, spectrum.length, 0, 360);
-        const amp = spectrum[i];
-        const r = p.map(amp, 0, 256, 20, 100);
+        for (let i = 0; i < spectrum.length; i++) {
+          const angle = p.map(i, 0, spectrum.length, 0, 360);
+          const amp = spectrum[i];
+          const r = p.map(amp, 0, 256, 70, 300);
 
-        const x = r * p.cos(angle);
-        const y = r * p.sin(angle);
-        p.stroke(i, 255, 255);
-        p.line(0, 0, x, y);
+          const x = r * p.cos(angle);
+          const y = r * p.sin(angle);
+          p.stroke(i, 0, 255);
+
+          p.line(0, 0, x, y);
+        }
       }
     };
   };
 
   useEffect(() => {
-    const myP5 = new p5(Sketch, myRef.current);
+    let myP5;
+    if (width && height) {
+      myP5 = new p5(Sketch, myRef.current);
+    }
     return () => {
-      myP5.remove();
+      if (myP5) myP5.remove();
     };
-  }, []);
+  }, [width, height]);
 
   return (
     <>
       <Wrapper ref={parentRef}>
         <div ref={myRef}></div>
+        <ImageWrapper>
+          <Image
+            ref={toggleRef}
+            src={isPlay ? "stop.svg" : "play.svg"}
+            alt={isPlay ? "stop" : "play"}
+            onClick={toggleSong}
+          />
+        </ImageWrapper>
       </Wrapper>
     </>
   );
@@ -97,8 +103,32 @@ const PlayBox = () => {
 
 export default PlayBox;
 const Wrapper = styled.section`
+  position: relative;
   width: 100%;
   height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 12px;
   border: solid white 1.5px;
+`;
+const ImageWrapper = styled.div`
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+const P5Box = styled.div``;
+const Image = styled.img`
+  width: 30px;
+  filter: invert(1);
+  cursor: pointer;
 `;
