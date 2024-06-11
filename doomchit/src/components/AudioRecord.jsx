@@ -88,9 +88,6 @@ const AudioRecord = () => {
           },
         }
       );
-
-      const response2 = await axios.get("http://127.0.0.1:8000/midi");
-      console.log(response2);
     } catch (error) {
       console.error(error);
     }
