@@ -86,7 +86,6 @@ const PlayBox = () => {
       setSong(soundFile);
     };
     fetchData();
-    console.log("!");
   }, []);
 
   useEffect(() => {
@@ -96,7 +95,7 @@ const PlayBox = () => {
     if (width && height) {
       myP5 = new p5(Sketch, myRef.current);
     }
-  }, [width, height]);
+  }, [width, height, song]);
 
   return (
     <>

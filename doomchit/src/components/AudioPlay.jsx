@@ -1,22 +1,46 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 
-const AudioPlay = ({ url }) => {
+const AudioPlay = ({ fileName }) => {
   const [isPlay, setIsPlay] = useState(false);
   const audioRef = useRef(null);
-  audioRef.current = new Audio(url);
-
   useEffect(() => {
-    console.log(isPlay);
-  }, [isPlay]);
+    if (fileName) {
+      const loadAudio = async () => {
+        try {
+          const audioModule = await import(
+            `../music/base/note_${fileName}.wav`
+          );
+          console.log(audioModule.default);
+          const audio = new Audio(audioModule.default);
+          audio.oncanplaythrough = () => {
+            audioRef.current = audio;
+          };
+        } catch (error) {
+          console.error("오디오 로드 실패:", error);
+          // 사용자에게 오류 메시지 표시
+        }
+      };
+
+      loadAudio();
+    }
+  }, [fileName]);
 
   const togglePlay = () => {
-    if (isPlay) {
-      audioRef.current.pause();
+    if (audioRef.current) {
+      if (isPlay) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch((e) => {
+          console.error("재생 실패:", e);
+          // 사용자에게 오류 메시지 표시
+        });
+      }
+      setIsPlay(!isPlay);
     } else {
-      audioRef.current.play();
+      console.error("오디오가 아직 로드되지 않았습니다.");
+      // 사용자에게 오류 메시지 표시
     }
-    setIsPlay(!isPlay);
   };
   return (
     <>

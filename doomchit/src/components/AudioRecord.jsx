@@ -5,17 +5,25 @@ import styled from "styled-components";
 import useLoadPitch from "../stores/pitch";
 
 const AudioRecord = () => {
-  const list = ["10.mp3", "72.mp3", "90.mp3", "91.mp3", "92.mp3"];
+  const { pitch } = useLoadPitch();
   const [stream, setStream] = useState();
   const [media, setMedia] = useState();
-  const [onRecs, setOnRecs] = useState(Array(list.length).fill(true));
+  const [onRecs, setOnRecs] = useState([]);
   const [source, setSource] = useState();
   const [analyser, setAnalyser] = useState();
-  const [audioUrls, setAudioUrls] = useState(Array(list.length).fill(null));
+  const [audioUrls, setAudioUrls] = useState([]);
   const [audioPreviewUrls, setAudioPreviewUrls] = useState(
-    Array(list.length).fill("")
+    Array(pitch.length).fill("")
   );
   const [isPlayNote, setIsPlayNote] = useState();
+
+  useEffect(() => {
+    if (pitch.length > 0) {
+      console.log(pitch);
+      setOnRecs(Array(pitch.length).fill(true));
+      setAudioUrls(Array(pitch.length).fill(null));
+    }
+  }, [pitch]);
 
   const onRecAudio = (index) => {
     // 음원정보를 담은 노드를 생성하거나 음원을 실행또는 디코딩 시키는 일을 한다
@@ -94,25 +102,19 @@ const AudioRecord = () => {
     [audioUrls]
   );
 
-  async function postSound(index) {
+  async function postSound(index, pitch) {
     // File 생성자를 사용해 파일로 변환
-    const sound = new File([audioUrls[index]], `soundBlob_${index}`, {
+    const sound = new File([audioUrls[index]], `note_${pitch}`, {
       lastModified: new Date().getTime(),
       type: "audio",
     });
     try {
       const formData = new FormData();
       formData.append("file", sound);
-      const response = await axios.post(
-        "http://127.0.0.1:8000/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      console.log(response);
+
+      await axios.post("http://127.0.0.1:8000/upload", formData, {
+        timeout: 5000, // 타임아웃 설정 (5초)
+      });
     } catch (error) {
       console.error(error);
     }
@@ -120,51 +122,54 @@ const AudioRecord = () => {
 
   return (
     <Wrapper>
-      {list.map((m, index) => (
-        <Container key={index}>
-          <Box>{m && <AudioPlay url={m} />}</Box>
-          <Box>
-            <RecordBox>
-              <ImageWrapper>
-                {onRecs[index] ? (
-                  <Image
-                    src={"microphone.svg"}
-                    alt={"microphone"}
-                    onClick={() => onRecAudio(index)}
-                  />
+      {pitch.length > 0 &&
+        pitch.map((m, index) => (
+          <Container key={index}>
+            <Box>{m && <AudioPlay fileName={m} />}</Box>
+            <Box>
+              <RecordBox>
+                <ImageWrapper>
+                  {onRecs.length > 0 && onRecs[index] ? (
+                    <Image
+                      src={"microphone.svg"}
+                      alt={"microphone"}
+                      onClick={() => onRecAudio(index)}
+                    />
+                  ) : (
+                    <Image
+                      src={"stop.svg"}
+                      alt={"stop"}
+                      onClick={() => offRecAudio(index)}
+                    />
+                  )}
+                </ImageWrapper>
+              </RecordBox>
+              <TextBox>
+                {!(audioUrls[index] && source) ? (
+                  <Txt>Record Yours</Txt>
                 ) : (
-                  <Image
-                    src={"stop.svg"}
-                    alt={"stop"}
-                    onClick={() => offRecAudio(index)}
-                  />
+                  <>
+                    <Button onClick={() => postSound(index, m)}>
+                      Complete
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setOnRecs((prevOnRecs) => {
+                          const newOnRecs = [...prevOnRecs];
+                          newOnRecs[index] = true;
+                          return newOnRecs;
+                        });
+                        onRecAudio(index);
+                      }}
+                    >
+                      Again
+                    </Button>
+                  </>
                 )}
-              </ImageWrapper>
-            </RecordBox>
-            <TextBox>
-              {!(audioUrls[index] && source) ? (
-                <Txt>Record Yours</Txt>
-              ) : (
-                <>
-                  <Button onClick={() => postSound(index)}>Complete</Button>
-                  <Button
-                    onClick={() => {
-                      setOnRecs((prevOnRecs) => {
-                        const newOnRecs = [...prevOnRecs];
-                        newOnRecs[index] = true;
-                        return newOnRecs;
-                      });
-                      onRecAudio(index);
-                    }}
-                  >
-                    Again
-                  </Button>
-                </>
-              )}
-            </TextBox>
-          </Box>
-        </Container>
-      ))}
+              </TextBox>
+            </Box>
+          </Container>
+        ))}
     </Wrapper>
   );
 };
