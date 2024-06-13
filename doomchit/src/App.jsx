@@ -17,17 +17,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-const Title = styled.h1`
-  display: flex;
-  margin-top: 180px;
-  font-family: "Tiny5", sans-serif;
-  font-size: 12rem;
-`;
-const Subtitle = styled.div`
-  margin-top: 6.8rem;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  font-size: 24px;
-  font-style: bold;
-`;

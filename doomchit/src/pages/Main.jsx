@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import AudioRecord from "../components/AudioRecord";
 import PlayBox from "../components/PlayBox";
 
 export default function Main() {
@@ -15,11 +16,12 @@ export default function Main() {
           <h2>Step 2</h2>
           <h2>Input your own Drum Note</h2>
         </Subtitle>
+        <AudioRecord />
         <Subtitle>
           <h2>Step 3</h2>
           <h2>Listen CUSTOM DOOMCHIT</h2>
         </Subtitle>
-        <PlayBox />
+        {/* <PlayBox /> */}
       </header>
     </>
   );
@@ -35,6 +37,6 @@ const Subtitle = styled.div`
   width: 100%;
   display: flex;
   justify-content: space-between;
-  font-size: 24px;
+  font-size: 21px;
   font-style: bold;
 `;
