@@ -102,6 +102,7 @@ const AudioRecord = () => {
     [audioUrls]
   );
 
+  const sendRecord = () => {};
   async function postSound(index, pitch) {
     // File 생성자를 사용해 파일로 변환
     const sound = new File([audioUrls[index]], `note_${pitch}`, {
@@ -121,56 +122,61 @@ const AudioRecord = () => {
   }
 
   return (
-    <Wrapper>
-      {pitch.length > 0 &&
-        pitch.map((m, index) => (
-          <Container key={index}>
-            <Box>{m && <AudioPlay fileName={m} />}</Box>
-            <Box>
-              <RecordBox>
-                <ImageWrapper>
-                  {onRecs.length > 0 && onRecs[index] ? (
-                    <Image
-                      src={"microphone.svg"}
-                      alt={"microphone"}
-                      onClick={() => onRecAudio(index)}
-                    />
+    <>
+      <Wrapper>
+        {pitch.length > 0 &&
+          pitch.map((m, index) => (
+            <Container key={index}>
+              <Box>{m && <AudioPlay fileName={m} />}</Box>
+              <Box>
+                <RecordBox>
+                  <ImageWrapper>
+                    {onRecs.length > 0 && onRecs[index] ? (
+                      <Image
+                        src={"microphone.svg"}
+                        alt={"microphone"}
+                        onClick={() => onRecAudio(index)}
+                      />
+                    ) : (
+                      <Image
+                        src={"stop.svg"}
+                        alt={"stop"}
+                        onClick={() => offRecAudio(index)}
+                      />
+                    )}
+                  </ImageWrapper>
+                </RecordBox>
+                <TextBox>
+                  {!(audioUrls[index] && source) ? (
+                    <Txt>Record Yours</Txt>
                   ) : (
-                    <Image
-                      src={"stop.svg"}
-                      alt={"stop"}
-                      onClick={() => offRecAudio(index)}
-                    />
+                    <>
+                      <Button onClick={() => postSound(index, m)}>
+                        Complete
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setOnRecs((prevOnRecs) => {
+                            const newOnRecs = [...prevOnRecs];
+                            newOnRecs[index] = true;
+                            return newOnRecs;
+                          });
+                          onRecAudio(index);
+                        }}
+                      >
+                        Again
+                      </Button>
+                    </>
                   )}
-                </ImageWrapper>
-              </RecordBox>
-              <TextBox>
-                {!(audioUrls[index] && source) ? (
-                  <Txt>Record Yours</Txt>
-                ) : (
-                  <>
-                    <Button onClick={() => postSound(index, m)}>
-                      Complete
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setOnRecs((prevOnRecs) => {
-                          const newOnRecs = [...prevOnRecs];
-                          newOnRecs[index] = true;
-                          return newOnRecs;
-                        });
-                        onRecAudio(index);
-                      }}
-                    >
-                      Again
-                    </Button>
-                  </>
-                )}
-              </TextBox>
-            </Box>
-          </Container>
-        ))}
-    </Wrapper>
+                </TextBox>
+              </Box>
+            </Container>
+          ))}
+      </Wrapper>
+      <ButtonWrapper>
+        <SendButton onClick={sendRecord}>생성하기</SendButton>
+      </ButtonWrapper>
+    </>
   );
 };
 
@@ -178,8 +184,38 @@ export default AudioRecord;
 const Wrapper = styled.div`
   margin-top: 16px;
   display: grid;
+
   grid-template-columns: repeat(auto-fill, minmax(30%, auto));
 `;
+const ButtonWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+`;
+const SendButton = styled.button`
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 0.5rem 1rem;
+
+  display: inline-block;
+
+  width: 180px;
+  height: 42px;
+  background-color: transparent;
+  color: white;
+  border: solid white 1px;
+  border-radius: 24px;
+  font-size: 21px;
+
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+
+  &:hover {
+    background-color: white;
+    color: black;
+  }
+`;
+
 const Container = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
